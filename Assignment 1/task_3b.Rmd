@@ -1,0 +1,121 @@
+---
+title: "Untitled"
+author: "Sebastian Wiesner"
+date: "4/12/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(digits=3)
+```
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+library(rpart)
+library(Metrics)
+library(randomForest)
+energy_eff = read.csv("Energy_efficiency.csv")
+attach(energy_eff)
+```
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+#check corelation
+round(cor(energy_eff$Overall.Height, energy_eff$Relative.Compactness),2)
+
+energy_eff$Relative.Compactness = as.factor(energy_eff$Relative.Compactness)
+energy_eff$Surface.Area = as.factor(energy_eff$Surface.Area)
+energy_eff$Wall.Area = as.factor(energy_eff$Wall.Area)
+energy_eff$Roof.Area = as.factor(energy_eff$Roof.Area)
+energy_eff$Overall.Height = as.factor(energy_eff$Overall.Height)
+energy_eff$Orientation = as.factor(energy_eff$Orientation)
+energy_eff$Glazing.Area = as.factor(energy_eff$Glazing.Area)
+energy_eff$Glazing.Area.Distribution = as.factor(energy_eff$Glazing.Area.Distribution)
+
+energy_eff_lm = lm(Heating.Load ~ Relative.Compactness + Surface.Area + Wall.Area + Roof.Area + Overall.Height + Orientation + Glazing.Area + Glazing.Area.Distribution, data = energy_eff)
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+set.seed(12358)
+# row indices for training data
+train_index = sample(1:nrow(energy_eff), 0.67*nrow(energy_eff))
+#training data
+energy_train_data = energy_eff[train_index, ]
+ # test data
+energy_test_data  = energy_eff[-train_index, ]
+```
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+#Regression tree with heating as outcome variable
+reg_tree_heat = rpart(Heating.Load ~ Relative.Compactness + Surface.Area + Wall.Area + Roof.Area + Overall.Height + Orientation + Glazing.Area + Glazing.Area.Distribution, data = energy_train_data)
+reg_tree_heat_pred = predict(reg_tree_heat, energy_test_data) 
+#summary(reg_tree_heat)
+
+reg_tree_heat_val = data.frame(cbind(actuals = energy_test_data$Heating.Load, predicteds = reg_tree_heat_pred))
+```
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+print(cat('MSE for regression tree (heating):', mse(reg_tree_heat_val$actuals, reg_tree_heat_val$predicteds)))
+print(cat('MAE for regression tree (heating):', mae(reg_tree_heat_val$actuals, reg_tree_heat_val$predicteds)))
+```
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+#Regression tree with cooling as outcome variable
+reg_tree_cool = rpart(Cooling.Load ~ Relative.Compactness + Surface.Area + Wall.Area + Roof.Area + Overall.Height + Orientation + Glazing.Area + Glazing.Area.Distribution, data = energy_train_data)
+reg_tree_cool_pred = predict(reg_tree_cool, energy_test_data) 
+#summary(reg_tree_cool)
+
+reg_tree_cool_val = data.frame(cbind(actuals = energy_test_data$Cooling.Load, predicteds = reg_tree_cool_pred))
+```
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+print(cat('MSE for regression tree (cooling):', mse(reg_tree_cool_val$actuals, reg_tree_cool_val$predicteds)))
+print(cat('MAE for regression tree (cooling):', mae(reg_tree_cool_val$actuals, reg_tree_cool_val$predicteds)))
+```
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+set.seed(12358)
+#Random forest with heating as outcome variable
+rand_for_heat = randomForest(Heating.Load ~ Relative.Compactness + Surface.Area + Wall.Area + Roof.Area + Overall.Height + Orientation + Glazing.Area + Glazing.Area.Distribution, data = energy_train_data, importance = TRUE, ntree=1000)
+rf_pred_heat = predict(rand_for_heat, energy_test_data) 
+#summary(rand_for_heat)
+
+rf_tree_heat_val <- data.frame(cbind(actuals = energy_test_data$Heating.Load, predicteds = rf_pred_heat))  # actuals_predicteds dataframe for Heating.Load
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+print(cat('MSE for regression tree (heating):', mse(rf_tree_heat_val$actuals, rf_tree_heat_val$predicteds)))
+print(cat('MAE for regression tree (heating):', mae(rf_tree_heat_val$actuals, rf_tree_heat_val$predicteds)))
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+set.seed(12358)
+#Random forest with cooling as outcome variable
+rand_for_cool = randomForest(Cooling.Load ~ Relative.Compactness + Surface.Area + Wall.Area + Roof.Area + Overall.Height + Orientation + Glazing.Area + Glazing.Area.Distribution, data = energy_train_data, importance = TRUE, ntree=1000)
+rf_pred_cool = predict(rand_for_cool, energy_test_data) 
+#summary(rand_for_cool)
+
+rf_tree_cool_val <- data.frame(cbind(actuals = energy_test_data$Heating.Load, predicteds = rf_pred_cool))  # actuals_predicteds dataframe for Heating.Load
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+print(cat('MSE for regression tree (cooling):', mse(rf_tree_cool_val$actuals, rf_tree_cool_val$predicteds)))
+print(cat('MAE for regression tree (cooling):', mae(rf_tree_cool_val$actuals, rf_tree_cool_val$predicteds)))
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+importance_rf_heat = as.data.frame(sort(importance(rand_for_heat)[,1],decreasing = TRUE),optional = T)
+names(importance_rf_heat) <- "% Inc MSE"
+importance_rf_heat
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+importance_rf_cool = as.data.frame(sort(importance(rand_for_cool)[,1],decreasing = TRUE),optional = T)
+names(importance_rf_cool) <- "% Inc MSE"
+importance_rf_cool
+```
+

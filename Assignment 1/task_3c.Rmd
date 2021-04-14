@@ -1,0 +1,160 @@
+---
+title: "task_3c"
+author: "Sebastian Wiesner"
+date: "4/12/2021"
+output: pdf_document
+---
+Code is based / created with on the following sources:
+- https://medium.com/tech-career-nuggets/sms-text-classification-a51defc2361c
+- https://cran.r-project.org/web/packages/tm/vignettes/tm.pdf
+- https://datascienceplus.com/text-message-classification/
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+knitr::opts_chunk$set(echo = TRUE)
+options(digits=3)
+library(tm)
+library(caret)
+library(wordcloud)
+library(naivebayes)
+library(e1071)
+library(pander)
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+sms_coll = read.csv("SmsCollection.csv", header=TRUE, sep="\t", quote="", stringsAsFactors = FALSE)
+attach(sms_coll)
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+split_label = strsplit(sms_coll$label.text, ";")
+apply_label = sapply(split_label , '[', 1)
+
+split_text = strsplit(sms_coll$label.text, ";")
+apply_text = sapply(split_label , '[', 2)
+
+sms_coll = data.frame(cbind(label = apply_label, text = apply_text))
+```
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+nrow(subset(sms_coll, label=="ham"))
+nrow(subset(sms_coll, label=="spam"))
+print(nrow(subset(sms_coll, label=="ham"))+nrow(subset(sms_coll, label=="spam")))
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+set.seed(12358)
+sms_coll = sms_coll[sample(nrow(sms_coll)),]
+
+#Factorize Label & fransform Text to char
+sms_coll$label = factor(sms_coll$label)
+sms_coll$text = as.character(sms_coll$text)
+
+#Use vcorpus for data-handling reasons
+sms_corp = VCorpus(VectorSource(sms_coll$text))
+```
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+sms_corp_edit = tm_map(sms_corp, content_transformer(stripWhitespace))
+sms_corp_edit = tm_map(sms_corp_edit, content_transformer(removePunctuation))
+sms_corp_edit = tm_map(sms_corp_edit, content_transformer(removeNumbers))
+sms_corp_edit = tm_map(sms_corp_edit, content_transformer(tolower))
+sms_corp_edit = tm_map(sms_corp_edit, removeWords, stopwords(kind = "en"))
+
+dtm_sms_edited = DocumentTermMatrix(sms_corp_edit)
+dtm_sms_edited
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+train_test_ratio = createDataPartition(sms_coll$label, p=0.66, list=F)
+
+#Subsets for the raw data
+training_sms_raw = sms_coll[train_test_ratio,]
+test_sms_raw = sms_coll[-train_test_ratio,]
+str(training_sms_raw)
+
+#Subsets for the edited corpus
+training_sms_corp_edit = sms_corp_edit[train_test_ratio]
+test_sms_corp_edit = sms_corp_edit[-train_test_ratio]
+
+#Subsets for the DTM
+
+training_dtm_sms_edited = dtm_sms_edited[train_test_ratio,]
+test_dtm_sms_edited = dtm_sms_edited[-train_test_ratio,]
+
+#Add Labels
+sms_training_labels = training_sms_raw$label
+sms_test_labels = test_sms_raw$label
+```
+
+
+```{r, echo=FALSE, fig.height=2, fig.width=5, fig.align='center', warning=FALSE, message=FALSE}
+cloud_spam = subset(sms_coll, label == "spam")
+cloud_ham  = subset(sms_coll, label == "ham")
+par(mfrow=c(1,2))
+wordcloud(cloud_spam$text, max.words = 50, scale = c(4, 0.5))
+wordcloud(cloud_ham$text, max.words = 50, scale = c(2, 0.5))
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+lowfreq_remove = findFreqTerms(training_dtm_sms_edited, lowfreq = 3)
+
+training_dtm_sms_edited_final = training_dtm_sms_edited[ , lowfreq_remove]
+test_dtm_sms_edited_final = test_dtm_sms_edited[ , lowfreq_remove]
+
+# Method to convert numeric entries into factors
+convert_counts <- function(x) {
+  x <- ifelse(x > 0, 1, 0)
+  x <- factor(x, levels = c(0, 1), labels = c("Absent", "Present"))
+}
+
+train_sms = apply(training_dtm_sms_edited_final, MARGIN = 2, convert_counts)
+test_sms  = apply(test_dtm_sms_edited_final, MARGIN = 2, convert_counts)
+```
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+sms_bayes = naive_bayes(train_sms, sms_training_labels)
+sms_bayes
+
+sms_bayes_laplace = naive_bayes(train_sms, sms_training_labels, laplace = 1)
+sms_bayes_laplace
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+pred_sms_testing_bayes = predict(sms_bayes, test_sms)
+summary_pred_sms_testing_bayes = confusionMatrix(pred_sms_testing_bayes, sms_test_labels, positive="spam")
+summary_pred_sms_testing_bayes
+
+pred_sms_testing_laplace = predict(sms_bayes_laplace, test_sms)
+summary_pred_sms_testing_laplace = confusionMatrix(pred_sms_testing_laplace, sms_test_labels, positive="spam")
+summary_pred_sms_testing_laplace
+```
+
+
+```{r, echo=FALSE}
+# Summarise performance into tabular form
+
+summarise_comp <- function(predictive_model) {
+  
+  model_summary <- list(True_Neg=predictive_model$table[1,1],  # True Negatives
+               True_Pos = predictive_model$table[2,2],  # True Positives
+               False_Neg = predictive_model$table[1,2],  # False Negatives
+               False_Pos = predictive_model$table[2,1],  # False Positives
+               accuracy = predictive_model$overall["Accuracy"],  # Accuracy
+               sensitivity = predictive_model$byClass["Sensitivity"])  # Sensitivity
+            
+  lapply(model_summary, round,4)
+}
+
+
+
+model_1 <- summarise_comp(summary_pred_sms_testing_bayes)
+model_2 <- summarise_comp(summary_pred_sms_testing_laplace)
+model_comp <- as.data.frame(rbind(model_1, model_2))
+rownames(model_comp) <- c("Model-1:[Naive Bayes]", "Model-2:[Naive Bayes+laplace]")
+pander(model_comp, style="rmarkdown", split.tables=Inf, keep.trailing.zeros=TRUE,
+       caption="Performance Table for two models")
+```
