@@ -1,15 +1,16 @@
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
-from sklearn.naive_bayes import GaussianNB
 from sklearn import preprocessing
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 from sklearn import tree
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
+
 
 class Titanic:
     def __init__(self, training=[], test=[], mode='train'):
@@ -63,7 +64,7 @@ class Titanic:
             print('csv created')
 
     def normalize_data(self, data):
-        scale = StandardScaler()
+        scale = StandardScaler():
         data['Age'] = scale.fit_transform(data[['Age']])
         data['SibSp'] = scale.fit_transform(data[['SibSp']])
         data['Parch'] = scale.fit_transform(data[['Parch']])
