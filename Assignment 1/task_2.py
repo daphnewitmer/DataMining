@@ -270,6 +270,7 @@ class Titanic:
             data[col] = le.fit_transform(data[col])
         return data
 
+    # Credits for this function to https://www.kaggle.com/asimislam
     def survival_rate(self, attr, data):
         print("{:12}   ---------------------------------".format(attr.upper()))
         x = sorted(data[attr].unique())  # values in attribute
