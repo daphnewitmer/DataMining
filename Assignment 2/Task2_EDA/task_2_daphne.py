@@ -1,18 +1,58 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
 
 # train = pd.read_csv("Data/training_set_VU_DM.csv")
 # test = pd.read_csv("Data/test_set_VU_DM.csv")
 # train = train.dropna(axis=1, how="any")
 # train.to_csv('Data/train_without_null.csv')
 
-train = pd.read_csv("Data/train_without_null.csv")          # If we remove columns that contain null values, 24 of the 54 remain
+train = pd.read_csv("Data/train_without_null.csv")                              # If we remove columns that contain null values, 24 of the 54 remain
 
 """
 Explore training data in general
 """
-print(train.info())                                       # There are int, objects and floats,
-print(train.count)                                        # There are 4958347 rows
+print(train.info())                                                             # There are int, objects and floats
+print(train.count)                                                              # There are 4958347 rows
+
+numeric_attributes = train[['prop_starrating', 'prop_location_score1', 'prop_log_historical_price', 'position',
+                            'price_usd', 'srch_length_of_stay', 'srch_booking_window', 'srch_adults_count',
+                            'srch_children_count', 'srch_room_count']]
+
+categorical_attributes = train[['prop_brand_bool', 'promotion_flag', 'prop_country_id',
+                                'visitor_location_country_id', 'site_id', 'srch_saturday_night_bool', 'random_bool',
+                                'click_bool', 'booking_bool']]  # 'srch_destination_id' too big for hist
+
+# Plot numeric attributes
+for i in numeric_attributes.columns:
+    plt.hist(numeric_attributes[i])
+    plt.title(i)
+    plt.show()
+
+# Plot categorical attributes
+for i in categorical_attributes.columns:
+    sns.barplot(categorical_attributes[i].value_counts().index, categorical_attributes[i].value_counts())
+    plt.title(i)
+    plt.show()
+
+# Heatmap of correlations between numeric attributes
+"""
+Slight correlation between srch_room_count and srch_adults_count: may contain similar information, maybe drop one of them or combine them
+Slight correlation between srch_length_of_stay and srch_booking_window
+Slight correlation between location_score1 and property_starrating 
+"""
+print(numeric_attributes.corr())
+sns.heatmap(numeric_attributes.corr())
+plt.show()
+
+# Make pivot table raltion between numeric attributes and booking bool. It gives the mean value for booking bool 0 vs 1 for all numeric attributes
+pd.pivot_table(train, values=numeric_attributes, index='booking_bool').to_csv(
+    'Images/pivot_table_numeric_values.csv')
+
+# make pivot table for categorical attributes using srch_id to count occurences of booking_bool 0 vs 1 for all catagorical attributes
+for attribute in categorical_attributes.columns:
+    pd.pivot_table(train, index = 'booking_bool', columns = attribute, values = 'srch_id' ,aggfunc ='count').to_csv('Images/PivotTables/'+ attribute +'.csv')
 
 
 """
@@ -44,9 +84,20 @@ print(train.srch_destination_id.nunique())                  # People are searchi
 """
 Explore data about user decision (only in training data)
 """
-print(train.value_counts(subset=['prop_id', 'booking_bool']))
-print(train.value_counts(subset=['prop_id', 'booking_bool']).count())
 
+booked = train.where(train['booking_bool'] == 1)
+counted = booked.value_counts(subset=['prop_id'])
+
+booked = train.where(train['click_bool'] == 1)
+counted = booked.value_counts(subset=['prop_id'])
+
+x = np.arange(40)
+plt.bar(x, height=counted[:40].tolist())
+plt.xticks(x, counted[:40].index.tolist(), rotation=70)
+plt.title('40 most clicked hotels')
+plt.xlabel('Hotel Ids')
+plt.ylabel('Times clicked')
+plt.show()
 
 """
 Explore training data about competitors
@@ -70,4 +121,3 @@ Plots
 # plt.pie(counts, labels=country_ids)
 # plt.title('Number of hotels per country ID')
 # plt.show()
-
