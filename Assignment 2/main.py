@@ -3,9 +3,9 @@ import Task4_Model.model_daph as model
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-MODE = "train"
+MODE = "test"
 
-train = pd.read_csv("../Assignment 2/Data/training_set_VU_DM.csv", rows=10000)
+train = pd.read_csv("../Assignment 2/Data/training_set_VU_DM.csv", nrows=10000)
 
 train = prep.remove_nan_values(train)
 train['target'] = train.apply(prep.add_target_attribute, axis=1)
@@ -22,7 +22,7 @@ X = train.drop("target", axis=1)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 if MODE == 'test':
-    test_full = pd.read_csv("../Assignment 2/Data/test_set_VU_DM.csv")
+    test_full = pd.read_csv("../Assignment 2/Data/test_set_VU_DM.csv", nrows=1000)
     test = prep.remove_nan_values(test_full)
     test = prep.drop_columns(test, ['date_time', 'prop_log_historical_price',
                                  'srch_length_of_stay', 'srch_booking_window', 'srch_adults_count',

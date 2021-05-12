@@ -1,0 +1,6 @@
+.DS_store
+venv
+__pycache__/
+.idea/
+Assignment 2/Data/
+Assignment 2/submission.csv
