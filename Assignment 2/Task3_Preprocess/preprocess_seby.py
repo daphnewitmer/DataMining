@@ -1,6 +1,10 @@
 import pandas as pd
 import numpy as np
 
+#To DO
+# Columns with uniform distribution ??
+# Interaction effects ???
+# Balance click classes
 
 def data_input(path, complete=False, nrows=10000):
     """
@@ -28,7 +32,7 @@ def drop_attributes(df, cutoff=25, extra_add=[]):
     """
     Function that drops attributes with a % condition
     Arguments: df, cutoff, extra_add
-    df: Daraframe
+    df: Dataframe as input
     cutoff: Percentage of desired cutoff from attributes (default: more than 25% missing)
     extra_add: Insert column name for manual drop a attribute (default: empty)
     """
@@ -55,8 +59,65 @@ def drop_attributes(df, cutoff=25, extra_add=[]):
     return df_copy
 
 
-#To DO
-# Imputation -> Mean, Median, -1, k-nearest .. ?
-# Check correlation between columns and drop redundant
-# Columns with uniform distribution
-# Normalize Price
+def correlation_drop(df, threshold):
+    """
+    Finds correlations between attributes
+    and drops them from the dataset
+    Arguments: df, threshold
+    df: Dataframe as input
+    threshold: Set threshold of correlation (e.g. 0.5) when columns get deleted
+    """
+    df_copy = df.copy()
+    col_corr = set()
+
+    corr_matrix = df_copy.corr()
+
+    for i in range(len(corr_matrix.columns)):
+        for j in range(i):
+            if (corr_matrix.iloc[i, j] >= threshold) and (corr_matrix.columns[j] not in col_corr):
+                colname = corr_matrix.columns[i]
+                col_corr.add(colname)
+                if colname in df_copy.columns:
+                    del df_copy[colname]
+    print(col_corr)
+    return df_copy
+
+
+def impute(df, median=False, mean=False, negative=False):
+    """
+    Imputes the the missing values either
+    with median, mean or -1 (negative value)
+    Arguments: df, median, mean, negative
+    df: Dataframe as input
+    median: Set median=True for imputation with median value of column
+    mean: Set mean=True for imputation with mean value of column
+    negative: Set negative=True for -1 values instead of nan's
+    Attention: Always only set one argument "True"
+    """
+    df_copy = df.copy()
+
+    list_missing = df_copy.columns[df_copy.isna().any()].tolist()
+
+    if median:
+        #Impute missing values with median
+        for i in list_missing:
+            df_copy[i].fillna(
+                (df_copy[i].median()), inplace=True)
+        print("Imputation with median done")
+
+    elif mean:
+        #Impute missing values with mean
+        for i in list_missing:
+            df_copy[i].fillna(
+                (df_copy[i].mean()), inplace=True)
+        print("Imputation with mean done")
+
+    elif negative:
+        for i in list_missing:
+            df_copy[i].fillna(-1, inplace=True)
+        print("Imputation with negative value done")
+
+    else:
+        print("No method choosen: Missing values at: ", list_missing)
+
+    return df_copy
