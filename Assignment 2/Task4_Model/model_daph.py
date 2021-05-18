@@ -1,16 +1,28 @@
 from sklearn.metrics import accuracy_score
-from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn import tree
 import pandas as pd
+from LambdaRankNN import LambdaRankNN
 
 FOLDS = 10
 
 """
   Classification Algorithms
 """
+
+
+def lambda_mart(X_train, X_test, y_train, y_test, Tqid, Vqid, MODE):
+
+    ranker = LambdaRankNN(input_size=X_train.shape[1], hidden_layer_sizes=(100,), activation=('relu',),  solver='adam')
+    ranker.fit(X_train.values, y_train.values, Tqid, epochs=4)
+    y_pred = ranker.predict(X_test.values)
+
+    if MODE == "train":
+        ranker.evaluate(X_test.values, y_test.values, Vqid, eval_at=4)
+
+    return y_pred
 
 def naive_bayes(X_train, X_test, y_train, y_test, mode):
     gnb = GaussianNB().fit(X_train, y_train)
@@ -39,12 +51,12 @@ def k_neighbors(X_train, X_test, y_train, y_test, mode):
     return y_pred
 
 
-def create_output(data, predictions):
-    data['target'] = predictions.tolist()
+def create_output(data, y_test, predictions):
+    data['predictions'] = predictions
+    data['likelihood'] = y_test
 
-    data = data.sort_values(['srch_id', 'target'])
-    df = pd.DataFrame({"srch_id": data.srch_id.values,
-                       "prop_id": data.prop_id
-                       })
-    df.to_csv("submission.csv", index=False)
+    data = data.sort_values(by=['srch_id', 'predictions'], ascending=[True, False])
+    data = data[['srch_id', 'prop_id', 'predictions', 'likelihood']]
+
+    data.to_csv("submission.csv", index=False)
     print('csv created')

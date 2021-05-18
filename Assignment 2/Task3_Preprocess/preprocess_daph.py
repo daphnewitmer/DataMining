@@ -1,6 +1,7 @@
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 import pandas as pd
+import numpy as np
 
 def remove_nan_values(data):
     """
@@ -35,6 +36,24 @@ def add_target_attribute(row):
     return int(0)
 
 
+def add_target_attribute_2(row):
+    """
+    Not working
+    :param row:
+    :return:
+    """
+
+    data = pd.read_csv("../Assignment 2/Data/training_set_VU_DM.csv", nrows=1000)
+
+    prop_id_booked = data.where((data.prop_id == row.prop_id) & (data.booking_bool == True)).dropna(subset=['booking_bool', 'prop_id'])
+    times_prop_booked = int(prop_id_booked.prop_id.count())
+
+    prop_id_occurrence = data.where(data.prop_id == row.prop_id).dropna(subset=['prop_id'])
+    prop_occurrence = int(prop_id_occurrence.prop_id.count())
+
+    return float(times_prop_booked / prop_occurrence)
+
+
 def normalize(data, attributes):
     """
     Function that normalizes the date
@@ -58,12 +77,29 @@ def prepare_data_for_model(train, test, attr_to_select):
     :param attr_to_select: array with attributes names as string
     :return: X_train, X_test, y_train, y_test (df.DataFrame)
     """
-    y = train["target"]
-    X = train[attr_to_select]
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
     if isinstance(test, pd.DataFrame):
+        Tqid = np.sort(train['srch_id'].values)
+        Vqid = False
+        test = test.sort_values(['srch_id'])
+        train = train.sort_values(['srch_id'])
+        X_train = train[attr_to_select]
+        y_train = train["likelihood_of_booking"]
+        y_test = False
+        X_test_all_attr = test
         X_test = test[attr_to_select]
+    else:
+        y = train["likelihood_of_booking"]
+        X = train
 
-    return X_train, X_test, y_train, y_test
+        X_train_all_attr, X_test_all_attr, y_train, y_test = train_test_split(X, y, test_size=0.3)
+
+        Tqid = np.sort(X_train_all_attr['srch_id'].values)
+        Vqid = np.sort(X_test_all_attr['srch_id'].values)
+        X_train_all_attr = X_train_all_attr.sort_values(['srch_id'])
+        X_test_all_attr = X_test_all_attr.sort_values(['srch_id'])
+
+        X_train = X_train_all_attr[attr_to_select]
+        X_test = X_test_all_attr[attr_to_select]
+
+    return X_test_all_attr, X_train, X_test, y_train, y_test, Tqid, Vqid
