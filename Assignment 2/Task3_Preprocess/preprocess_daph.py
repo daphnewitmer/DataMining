@@ -2,6 +2,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import numpy as np
+import gc
 
 def remove_nan_values(data):
     """
@@ -67,6 +68,26 @@ def normalize(data, attributes):
         data[attr] = scale.fit_transform(data[[attr]])
 
     return data
+
+
+def normalize_2(df: pd.DataFrame, column: str, target: str, log: bool = False) -> pd.DataFrame:
+    df[target] = np.log10(df[target] + 1e-5) if log else df[target]
+
+    agg_methods = ["mean", "std"]
+    df_agg = df.groupby(column).agg({target: agg_methods})
+    df_agg.columns = df_agg.columns.droplevel()
+
+    col = {}
+    for method in agg_methods:
+        col[method] = f"{target}_{method}"
+    df_agg.rename(columns=col, inplace=True)
+
+    df_norm = df.merge(df_agg.reset_index(), on=column)
+    df_norm[f"{target}_norm_by_{column}"] = (df_norm[target] - df_norm[f"{target}_mean"]) / df_norm[f"{target}_std"]
+    df_norm = df_norm.drop(labels=[col["mean"], col["std"]], axis=1)
+
+    gc.collect()
+    return df_norm
 
 
 def prepare_data_for_model(train, test, attr_to_select):

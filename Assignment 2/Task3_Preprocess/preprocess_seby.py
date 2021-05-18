@@ -83,7 +83,7 @@ def correlation_drop(df, threshold):
     return df_copy
 
 
-def impute(df, median=False, mean=False, negative=False):
+def impute(df, median=False, mean=False, negative=False, zero=False, list_missing=[]):
     """
     Imputes the the missing values either
     with median, mean or -1 (negative value)
@@ -96,7 +96,8 @@ def impute(df, median=False, mean=False, negative=False):
     """
     df_copy = df.copy()
 
-    list_missing = df_copy.columns[df_copy.isna().any()].tolist()
+    if len(list_missing) == 0:
+        list_missing = df_copy.columns[df_copy.isna().any()].tolist()
 
     if median:
         #Impute missing values with median
@@ -117,7 +118,13 @@ def impute(df, median=False, mean=False, negative=False):
             df_copy[i].fillna(-1, inplace=True)
         print("Imputation with negative value done")
 
+    elif zero:
+        for i in list_missing:
+            df_copy[i].fillna(0, inplace=True)
+        print("Imputation with zero done")
+
     else:
         print("No method choosen: Missing values at: ", list_missing)
+
 
     return df_copy

@@ -4,12 +4,15 @@ import Task3_Preprocess.preprocess_seby as prep_s
 
 MODE = "train"  # "train" or "test"
 
-attr_to_select = ['prop_starrating', 'prop_location_score1', 'price_usd', 'promotion_flag']
+attr_to_select = ['prop_starrating', 'prop_location_score1', 'price_usd', 'promotion_flag', 'prop_review_score', 'prop_location_score2']
 
 train = prep_s.data_input("../Assignment 2/Data/training_set_VU_DM.csv", complete=False, nrows=100)
 train['likelihood_of_booking'] = train.apply(prep_d.add_target_attribute, axis=1)
-# train = prep_s.impute(train, median=True)
+train = prep_s.impute(train, zero=True, list_missing=['prop_review_score', 'prop_location_score2'])
 train = prep_d.remove_nan_values(train)
+train = prep_d.normalize_2(train, column="srch_id", target="price_usd", log=True)
+train = prep_d.normalize_2(train, column="prop_id", target="price_usd")
+train = prep_d.normalize_2(train, column="srch_id", target="prop_starrating")
 # train = prep_d.normalize(train, ['price_usd'])
 
 if MODE == 'test':
