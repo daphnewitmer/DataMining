@@ -64,7 +64,7 @@ class Titanic:
             print('csv created')
 
     def normalize_data(self, data):
-        scale = StandardScaler():
+        scale = StandardScaler()
         data['Age'] = scale.fit_transform(data[['Age']])
         data['SibSp'] = scale.fit_transform(data[['SibSp']])
         data['Parch'] = scale.fit_transform(data[['Parch']])
