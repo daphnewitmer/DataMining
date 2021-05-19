@@ -15,6 +15,7 @@ FOLDS = 10
 
 def lambda_mart(X_train, X_test, y_train, y_test, Tqid, Vqid, MODE):
 
+    print('Running lambdaMART')
     ranker = LambdaRankNN(input_size=X_train.shape[1], hidden_layer_sizes=(100,), activation=('relu',),  solver='adam')
     ranker.fit(X_train.values, y_train.values, Tqid, epochs=4)
     y_pred = ranker.predict(X_test.values)
@@ -52,11 +53,11 @@ def k_neighbors(X_train, X_test, y_train, y_test, mode):
 
 
 def create_output(data, y_test, predictions):
+    print('Creating output csv')
+
     data['predictions'] = predictions
-    data['likelihood'] = y_test
 
     data = data.sort_values(by=['srch_id', 'predictions'], ascending=[True, False])
-    data = data[['srch_id', 'prop_id', 'predictions', 'likelihood']]
+    data = data[['srch_id', 'prop_id']]
 
-    data.to_csv("submission.csv", index=False)
-    print('csv created')
+    data.to_csv("submission_best.csv", index=False)

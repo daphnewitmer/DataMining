@@ -2,23 +2,25 @@ import Task3_Preprocess.preprocess_daph as prep_d
 import Task4_Model.model_daph as model
 import Task3_Preprocess.preprocess_seby as prep_s
 
-MODE = "train"  # "train" or "test"
+MODE = "test"  # "train" or "test"
 
 attr_to_select = ['prop_starrating', 'prop_location_score1', 'price_usd', 'promotion_flag', 'prop_review_score', 'prop_location_score2']
 
-train = prep_s.data_input("../Assignment 2/Data/training_set_VU_DM.csv", complete=False, nrows=100)
+train = prep_s.data_input("../Assignment 2/Data/training_set_VU_DM.csv", complete=True, nrows=100)
 train['likelihood_of_booking'] = train.apply(prep_d.add_target_attribute, axis=1)
 train = prep_s.impute(train, zero=True, list_missing=['prop_review_score', 'prop_location_score2'])
 train = prep_d.remove_nan_values(train)
 train = prep_d.normalize_2(train, column="srch_id", target="price_usd", log=True)
 train = prep_d.normalize_2(train, column="prop_id", target="price_usd")
 train = prep_d.normalize_2(train, column="srch_id", target="prop_starrating")
-# train = prep_d.normalize(train, ['price_usd'])
 
 if MODE == 'test':
     test_full = prep_s.data_input("../Assignment 2/Data/test_set_VU_DM.csv", complete=True, nrows=10000)
-    test = prep_d.remove_nan_values(test_full)
-    test = prep_d.normalize(test, ['price_usd'])
+    test = prep_s.impute(test_full, zero=True, list_missing=['prop_review_score', 'prop_location_score2'])
+    test = prep_d.remove_nan_values(test)
+    test = prep_d.normalize_2(test, column="srch_id", target="price_usd", log=True)
+    test = prep_d.normalize_2(test, column="prop_id", target="price_usd")
+    test = prep_d.normalize_2(test, column="srch_id", target="prop_starrating")
 if MODE == 'train':
     test = False
 

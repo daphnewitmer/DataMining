@@ -10,6 +10,8 @@ def remove_nan_values(data):
     :param data: pd.DataFrame
     :return: pd.DataFrame
     """
+
+    print('Removing columns with NaN values')
     return data.dropna(axis=1, how="any")
 
 
@@ -87,6 +89,8 @@ def normalize_2(df: pd.DataFrame, column: str, target: str, log: bool = False) -
     df_norm = df_norm.drop(labels=[col["mean"], col["std"]], axis=1)
 
     gc.collect()
+
+    print('Finished normalizing: ' + target)
     return df_norm
 
 
