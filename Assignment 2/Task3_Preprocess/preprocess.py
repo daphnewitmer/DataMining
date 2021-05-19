@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import gc
 
+
 def remove_nan_values(data):
     """
     Drop any column with a NaN value in it
@@ -13,16 +14,6 @@ def remove_nan_values(data):
 
     print('Removing columns with NaN values')
     return data.dropna(axis=1, how="any")
-
-
-def drop_columns(data, attributes):
-    """
-    Function that drops all given attributes from the data
-    :param data: pd.DataFrame
-    :param attributes: array with attribute names as string
-    :return: pd.DataFrame
-    """
-    return data.drop(attributes, axis=1)
 
 
 def add_target_attribute(row):
@@ -39,43 +30,7 @@ def add_target_attribute(row):
     return int(0)
 
 
-def add_target_attribute_2(row):
-    """
-    Not working
-    :param row:
-    :return:
-    """
-
-    data = pd.read_csv(
-        "../Assignment 2/Data/training_set_VU_DM.csv", nrows=1000)
-
-    prop_id_booked = data.where((data.prop_id == row.prop_id) & (
-        data.booking_bool == True)).dropna(subset=['booking_bool', 'prop_id'])
-    times_prop_booked = int(prop_id_booked.prop_id.count())
-
-    prop_id_occurrence = data.where(
-        data.prop_id == row.prop_id).dropna(subset=['prop_id'])
-    prop_occurrence = int(prop_id_occurrence.prop_id.count())
-
-    return float(times_prop_booked / prop_occurrence)
-
-
-def normalize(data, attributes):
-    """
-    Function that normalizes the date
-    :param data: df.DataFrame
-    :param attributes: array with attributes names as string
-    :return: df.DataFrame
-    """
-
-    for attr in attributes:
-        scale = StandardScaler()
-        data[attr] = scale.fit_transform(data[[attr]])
-
-    return data
-
-
-def normalize_2(df: pd.DataFrame, column: str, target: str, log: bool = False) -> pd.DataFrame:
+def normalize(df: pd.DataFrame, column: str, target: str, log: bool = False) -> pd.DataFrame:
     df[target] = np.log10(df[target] + 1e-5) if log else df[target]
 
     agg_methods = ["mean", "std"]
