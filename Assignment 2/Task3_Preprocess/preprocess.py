@@ -224,6 +224,9 @@ def factor_to_categorical(columns, no_of_groups):
     """
     Convert column with many different numeric entries to few categories
     """
+    data = [] #placeholder
+
+
     for column in columns:
         data[column] = pd.qcut(data[column].values,
                                no_of_groups, duplicates='drop').codes + 1
@@ -237,7 +240,70 @@ def rank_price_within_search_id(data):
     """
     unique_search_ids = set(data['srch_id'])
     ranks = []
+    ss = [] #Placeholder
     for ids in unique_search_ids:
         ranks.append(ss.rankdata(
             data.loc[data['srch_id'] == ids, 'prop_log_historical_price']))
     return ranks
+
+
+def agg_competitors(df):
+    """
+    Aggregates the data of the 8 competitors to single columns
+    Arguments: df
+    df: Dataframe
+    
+    agg_comp_rate = Aggregates the competitors rate
+    agg_comp_inv = Aggregates the competitors availability
+    agg_comp_rate_perc = Aggregates the competitors absolute percentage difference
+    """
+    df_copy = df.copy()
+
+    df_copy["agg_comp_rate"] = df_copy.filter(
+        regex=("comp.*rate$")).mean(axis=1)
+    df_copy["agg_comp_inv"] = df_copy.filter(regex=("comp.*inv")).mean(axis=1)
+    df_copy["agg_comp_rate_perc"] = df_copy.filter(
+        regex=("comp.*rate_perc")).mean(axis=1)
+
+    df_copy = df_copy.loc[:, ~df_copy.columns.str.startswith('comp')]
+
+    return df_copy
+
+
+#+++++ CHANGE IT - COPIED ATM +++++
+def test_impute_test(df):
+    """
+    Imputation for different categories in different ways
+    """
+
+    df_copy = df.copy()
+
+    # Impute hotel properties with the worst score possible (0)
+    df_copy[['prop_review_score', 'prop_location_score2']] = df_copy[[
+        'prop_review_score', 'prop_location_score2']].fillna(0)
+
+    # set missing original distances to max() for each searchquery and -1 if no info
+    df_copy[['srch_id', 'orig_destination_distance']].fillna(
+        df_copy[['srch_id', 'orig_destination_distance']].groupby('srch_id').transform('max').squeeze(), inplace=True)
+    df_copy.orig_destination_distance.fillna(-1, inplace=True)
+
+    # competitor info: aggregate with mean w.r.t searchquery and otherwise 0
+    df_copy[['srch_id', 'agg_comp_rate']].fillna(df_copy[['srch_id', 'agg_comp_rate']].groupby(
+        'srch_id').transform('mean').squeeze(), inplace=True)
+    df_copy[['srch_id', 'agg_comp_rate_perc']].fillna(df_copy[['srch_id', 'agg_comp_rate_perc']].groupby(
+        'srch_id').transform('mean').squeeze(), inplace=True)
+    df_copy[['srch_id', 'agg_comp_inv']].fillna(df_copy[['srch_id', 'agg_comp_inv']].groupby(
+        'srch_id').transform('mean').squeeze(), inplace=True)
+    df_copy[['agg_comp_rate', 'agg_comp_rate_perc', 'agg_comp_inv']] = df_copy[[
+        'agg_comp_rate', 'agg_comp_rate_perc', 'agg_comp_inv']].fillna(0)
+
+    return df_copy
+
+#+++++ CHANGE IT - COPIED ATM +++++
+def makeTarget(df):
+    df['target'] = np.where(df.click_bool == 1, 1, 0)
+    df['target'] = np.where(df.booking_bool == 1, 5, df.target)
+
+    df.loc[:, ['target', 'click_bool', 'booking_bool']].head(n=20)
+
+    return df
