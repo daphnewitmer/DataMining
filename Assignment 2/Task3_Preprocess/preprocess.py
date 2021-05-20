@@ -106,15 +106,11 @@ def data_input(path, complete=False, nrows=10000):
         df = pd.read_csv(path)
         df["date_time"] = pd.to_datetime(
             df["date_time"], format="%Y-%m-%d %H:%M:%S")
-        if substring in path:
-            df = df.drop(["position", "gross_bookings_usd"], axis=1)
 
     else:
         df = pd.read_csv(path, nrows=nrows)
         df["date_time"] = pd.to_datetime(
             df["date_time"], format="%Y-%m-%d %H:%M:%S")
-        if substring in path:
-            df = df.drop(["position", "gross_bookings_usd"], axis=1)
 
     return df
 
@@ -278,9 +274,9 @@ def test_impute_test(df):
 
     df_copy = df.copy()
 
-    # Impute hotel properties with the worst score possible (0)
-    df_copy[['prop_review_score', 'prop_location_score2']] = df_copy[[
-        'prop_review_score', 'prop_location_score2']].fillna(0)
+    # # Impute hotel properties with the worst score possible (0)
+    # df_copy[['prop_review_score', 'prop_location_score2']] = df_copy[[
+    #     'prop_review_score', 'prop_location_score2']].fillna(0)
 
     # set missing original distances to max() for each searchquery and -1 if no info
     df_copy[['srch_id', 'orig_destination_distance']].fillna(

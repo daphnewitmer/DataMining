@@ -13,7 +13,7 @@ import dataframe_image as dfi
 test = pd.read_csv("../Data/test_set_VU_DM.csv")
 
 data = test
-print_general = False
+print_general = True
 make_plots = False
 # print(train.info())                                                             # There are int, objects and floats
 # print(train.nunique())
@@ -32,7 +32,7 @@ if print_general:
     Explore training data about visitors
     """
     print('---------Explore training data about visitors----------')
-    print('There is data from ' + str(data.visitor_location_country_id.nunique()) + ' different countries.')        # Train: 210
+    print('There are people from ' + str(data.visitor_location_country_id.nunique()) + ' different countries.')        # Train: 210
     print('    ')
 
     """
@@ -42,16 +42,16 @@ if print_general:
     print('There is data from ' + str(data.prop_id.nunique()) + ' different hotels.')                                # Train: 129113
     print('The hotels are in ' + str(data.prop_country_id.nunique()) + ' different countries.')                      # Train: 172
 
-    booked = data.where(data['booking_bool'] == True)
-    booked = booked.dropna(subset=['booking_bool'])
-    print('Hotels have been booked ' + str(booked.prop_id.count()) + ' times.')                               # Train: 138390
-    print(str(booked.prop_id.nunique()) + ' different hotels have been booked.')                             # Train: 43428
-
-    clicked = data.where(data['click_bool'] == True)
-    clicked = clicked.dropna(subset=['click_bool'])
-    print('Hotels have been clicked on ' + str(clicked.prop_id.count()) + ' times.')                              # Train: 221879
-    print(str(clicked.prop_id.nunique()) + ' different hotels have been clicked on.')                            # Train: 57861
-    print('    ')
+    # booked = data.where(data['booking_bool'] == True)
+    # booked = booked.dropna(subset=['booking_bool'])
+    # print('Hotels have been booked ' + str(booked.prop_id.count()) + ' times.')                               # Train: 138390
+    # print(str(booked.prop_id.nunique()) + ' different hotels have been booked.')                             # Train: 43428
+    #
+    # clicked = data.where(data['click_bool'] == True)
+    # clicked = clicked.dropna(subset=['click_bool'])
+    # print('Hotels have been clicked on ' + str(clicked.prop_id.count()) + ' times.')                              # Train: 221879
+    # print(str(clicked.prop_id.nunique()) + ' different hotels have been clicked on.')                            # Train: 57861
+    # print('    ')
 
     """
     Explore training data about search queries
