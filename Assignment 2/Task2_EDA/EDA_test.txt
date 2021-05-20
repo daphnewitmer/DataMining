@@ -3,7 +3,7 @@ There are 4959183 rows in the data.
 There are 50 columns in the data.
 
 ---------Explore training data about visitors----------
-There is data from 210 different countries.
+There are people from 210 different countries.
 
 ---------Explore training data about the hotels----------
 There is data from 129438 different hotels.
