@@ -3,7 +3,6 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn import tree
-import pandas as pd
 from LambdaRankNN import LambdaRankNN
 
 FOLDS = 10
@@ -14,13 +13,17 @@ FOLDS = 10
 
 def lambda_mart(X_train, X_test, y_train, y_test, Tqid, Vqid, MODE):
 
-    print('Running lambdaMART')
-    ranker = LambdaRankNN(input_size=X_train.shape[1], hidden_layer_sizes=(1000, 10), activation=('relu', 'relu'),  solver='rmsprop')  # rmsprop adamax
-    ranker.fit(X_train.values, y_train.values, Tqid, epochs=4)
-    y_pred = ranker.predict(X_test.values)
+    print('Running lambdaRANK')
+    ranker = LambdaRankNN(input_size=X_train.shape[1],
+                          hidden_layer_sizes=(80, 40, ),
+                          activation=('relu', 'relu',),  # relu, softplus, softsign, tanh, elu, exponential
+                          solver='rmsprop')  # rmsprop or adamax
+    ranker.fit(X_train.values, y_train.values, Tqid, epochs=50)
 
     if MODE == "train":
-        ranker.evaluate(X_test.values, y_test.values, Vqid, eval_at=4)
+        ranker.evaluate(X_test.values, y_test.values, Vqid, eval_at=5)
+
+    y_pred = ranker.predict(X_test.values)
 
     return y_pred
 
