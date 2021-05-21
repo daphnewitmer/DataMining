@@ -128,3 +128,52 @@ def impute(df, median=False, mean=False, negative=False, zero=False, list_missin
 
 
     return df_copy
+
+
+def agg_competitors(df):
+    """
+    Aggregates the data of the 8 competitors to single columns
+    Arguments: df
+    df: Dataframe
+
+    agg_comp_rate = Aggregates the competitors rate
+    agg_comp_inv = Aggregates the competitors availability
+    agg_comp_rate_perc = Aggregates the competitors absolute percentage difference
+    """
+    df_copy = df.copy()
+
+    df_copy["agg_comp_rate"] = df_copy.filter(
+        regex=("comp.*rate$")).mean(axis=1)
+    df_copy["agg_comp_inv"] = df_copy.filter(regex=("comp.*inv")).mean(axis=1)
+    df_copy["agg_comp_rate_perc"] = df_copy.filter(
+        regex=("comp.*rate_perc")).mean(axis=1)
+
+    df_copy = df_copy.loc[:, ~df_copy.columns.str.startswith('comp')]
+
+    return df_copy
+
+
+
+def test_impute_test(df):
+    """
+    Imputation for different categories in different ways
+    """
+
+    df_copy = df.copy()
+
+    # set missing original distances to max() for each searchquery and -1 if no info
+    df_copy[['srch_id', 'orig_destination_distance']].fillna(
+        df_copy[['srch_id', 'orig_destination_distance']].groupby('srch_id').transform('max').squeeze(), inplace=True)
+    df_copy.orig_destination_distance.fillna(-1, inplace=True)
+
+    # competitor info: aggregate with mean w.r.t searchquery and otherwise 0
+    df_copy[['srch_id', 'agg_comp_rate']].fillna(df_copy[['srch_id', 'agg_comp_rate']].groupby(
+        'srch_id').transform('mean').squeeze(), inplace=True)
+    df_copy[['srch_id', 'agg_comp_rate_perc']].fillna(df_copy[['srch_id', 'agg_comp_rate_perc']].groupby(
+        'srch_id').transform('mean').squeeze(), inplace=True)
+    df_copy[['srch_id', 'agg_comp_inv']].fillna(df_copy[['srch_id', 'agg_comp_inv']].groupby(
+        'srch_id').transform('mean').squeeze(), inplace=True)
+    df_copy[['agg_comp_rate', 'agg_comp_rate_perc', 'agg_comp_inv']] = df_copy[[
+        'agg_comp_rate', 'agg_comp_rate_perc', 'agg_comp_inv']].fillna(0)
+
+    return df_copy
