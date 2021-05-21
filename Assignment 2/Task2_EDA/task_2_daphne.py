@@ -9,11 +9,11 @@ import dataframe_image as dfi
 # train = train.dropna(axis=1, how="any")
 # train.to_csv('Data/train_without_null.csv')
 
-# train = pd.read_csv("../Data/training_set_VU_DM.csv")                              # If we remove columns that contain null values, 24 of the 54 remain
-test = pd.read_csv("../Data/test_set_VU_DM.csv")
+train = pd.read_csv("../Data/training_set_VU_DM.csv", nrows=1)                              # If we remove columns that contain null values, 24 of the 54 remain
+# test = pd.read_csv("../Data/test_set_VU_DM.csv")
 
-data = test
-print_general = True
+data = train
+print_general = False
 make_plots = False
 # print(train.info())                                                             # There are int, objects and floats
 # print(train.nunique())
@@ -42,16 +42,16 @@ if print_general:
     print('There is data from ' + str(data.prop_id.nunique()) + ' different hotels.')                                # Train: 129113
     print('The hotels are in ' + str(data.prop_country_id.nunique()) + ' different countries.')                      # Train: 172
 
-    # booked = data.where(data['booking_bool'] == True)
-    # booked = booked.dropna(subset=['booking_bool'])
-    # print('Hotels have been booked ' + str(booked.prop_id.count()) + ' times.')                               # Train: 138390
-    # print(str(booked.prop_id.nunique()) + ' different hotels have been booked.')                             # Train: 43428
-    #
-    # clicked = data.where(data['click_bool'] == True)
-    # clicked = clicked.dropna(subset=['click_bool'])
-    # print('Hotels have been clicked on ' + str(clicked.prop_id.count()) + ' times.')                              # Train: 221879
-    # print(str(clicked.prop_id.nunique()) + ' different hotels have been clicked on.')                            # Train: 57861
-    # print('    ')
+    booked = data.where(data['booking_bool'] == True)
+    booked = booked.dropna(subset=['booking_bool'])
+    print('Hotels have been booked ' + str(booked.prop_id.count()) + ' times.')                               # Train: 138390
+    print(str(booked.prop_id.nunique()) + ' different hotels have been booked.')                             # Train: 43428
+
+    clicked = data.where(data['click_bool'] == True)
+    clicked = clicked.dropna(subset=['click_bool'])
+    print('Hotels have been clicked on ' + str(clicked.prop_id.count()) + ' times.')                              # Train: 221879
+    print(str(clicked.prop_id.nunique()) + ' different hotels have been clicked on.')                            # Train: 57861
+    print('    ')
 
     """
     Explore training data about search queries
@@ -88,7 +88,7 @@ if make_plots:
     """
     # Make pivot table relation between numeric attributes and booking bool. It gives the mean value for booking bool 0 vs 1 for all numeric attributes
     table = pd.pivot_table(data, values=numeric_attributes, index='booking_bool')
-    dfi.export(table, 'booking_bool.png')
+    dfi.export(table, 'EDA_outputs/booking_bool.png')
 
     """
     Heatmap
@@ -99,6 +99,67 @@ if make_plots:
     plt.xticks(rotation=75)
     plt.title('Correlations between numeric attributes', fontdict={'fontsize': 12})
     plt.savefig('Heatmap-test.png', bbox_inches='tight')
+
+    """
+    plot
+    """
+    prop_review_NaN = data.where(data['prop_review_score'].isna())
+    prop_review_not_NaN = data.dropna(axis=0, subset=['prop_review_score'])
+
+    clicked_NaN = prop_review_NaN.where(prop_review_NaN['click_bool'] == True)
+    clicked_NaN = clicked_NaN.dropna(subset=['click_bool'])
+    clicked_NaN = clicked_NaN.prop_id.count() / prop_review_NaN.prop_id.count()
+    clicked_not_NaN = prop_review_not_NaN.where(prop_review_not_NaN['click_bool'] == True)
+    clicked_not_NaN = clicked_not_NaN.dropna(subset=['click_bool'])
+    clicked_not_NaN = clicked_not_NaN.prop_id.count() / prop_review_not_NaN.prop_id.count()
+
+    booked_NaN = prop_review_NaN.where(prop_review_NaN['booking_bool'] == True)
+    booked_NaN = booked_NaN.dropna(subset=['booking_bool'])
+    booked_NaN = booked_NaN.prop_id.count() / prop_review_NaN.prop_id.count()
+    booked_not_NaN = prop_review_not_NaN.where(prop_review_not_NaN['booking_bool'] == True)
+    booked_not_NaN = booked_not_NaN.dropna(subset=['booking_bool'])
+    booked_not_NaN = booked_not_NaN.prop_id.count() / prop_review_not_NaN.prop_id.count()
+
+    visitor_hist_NaN = data.where(data['visitor_hist_starrating'].isna())
+    visitor_hist_not_NaN = data.dropna(axis=0, subset=['visitor_hist_starrating'])
+
+    v_clicked_NaN = visitor_hist_NaN.where(visitor_hist_NaN['click_bool'] == True)
+    v_clicked_NaN = v_clicked_NaN.dropna(subset=['click_bool'])
+    v_clicked_NaN = v_clicked_NaN.prop_id.count() / visitor_hist_NaN.prop_id.count()
+    v_clicked_not_NaN = visitor_hist_not_NaN.where(visitor_hist_not_NaN['click_bool'] == True)
+    v_clicked_not_NaN = v_clicked_not_NaN.dropna(subset=['click_bool'])
+    v_clicked_not_NaN = v_clicked_not_NaN.prop_id.count() / visitor_hist_not_NaN.prop_id.count()
+
+    v_booked_NaN = visitor_hist_NaN.where(visitor_hist_NaN['booking_bool'] == True)
+    v_booked_NaN = v_booked_NaN.dropna(subset=['booking_bool'])
+    v_booked_NaN = v_booked_NaN.prop_id.count() / visitor_hist_NaN.prop_id.count()
+    v_booked_not_NaN = visitor_hist_not_NaN.where(visitor_hist_not_NaN['booking_bool'] == True)
+    v_booked_not_NaN = v_booked_not_NaN.dropna(subset=['booking_bool'])
+    v_booked_not_NaN = v_booked_not_NaN.prop_id.count() / visitor_hist_not_NaN.prop_id.count()
+
+    # width of the bars
+    barWidth = 0.3
+    # Choose the height of the blue bars
+    bars1 = [clicked_not_NaN, booked_not_NaN, v_clicked_not_NaN, v_booked_not_NaN]
+    # Choose the height of the cyan bars
+    bars2 = [clicked_NaN, booked_NaN, v_clicked_NaN, v_booked_NaN]
+    # The x position of bars
+    r1 = np.arange(len(bars1))
+    r2 = [x + barWidth for x in r1]
+    # Create blue bars
+    plt.bar(r1, bars1, width=barWidth, color='black', edgecolor='black', capsize=7, label='no NaN values')
+    # Create cyan bars
+    plt.bar(r2, bars2, width=barWidth, color='gray', edgecolor='black', capsize=7, label='NaN')
+
+    # general layout
+    plt.xticks([r + barWidth for r in range(len(bars1))], ['Hotels_Clicked', 'Hotels_Booked', 'Hotels_Clicked', 'Hotels_Booked'])
+    plt.xlabel('visitor_hist_starrating                 prop_review_score')
+    plt.ylabel('Percentage of queries clicked/booked')
+    plt.legend()
+    plt.title('Percentage clicked and booked for NaN vs no NaN values')
+    plt.show()
+
+
 
 
 
